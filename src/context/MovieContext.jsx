@@ -1,10 +1,11 @@
 import { createContext, useCallback, useContext, useMemo } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { STORAGE_KEYS } from '../utils/constants';
 
 const MovieContext = createContext(null);
 
 export function MovieProvider({ children }) {
-  const [favorites, setFavorites] = useLocalStorage('movie-explorer-favorites', []);
+  const [favorites, setFavorites] = useLocalStorage(STORAGE_KEYS.favorites, []);
 
   const isFavorite = useCallback((movieId) => favorites.some((movie) => movie.id === movieId), [favorites]);
   const toggleFavorite = useCallback((movie) => {
