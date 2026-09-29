@@ -15,6 +15,15 @@ import { useParams } from 'react-router-dom';
 import { getMovieDetails } from '../api/movieApi';
 import ErrorMessage from '../components/common/ErrorMessage';
 import { useMovies } from '../context/MovieContext';
+import useOnlineStatus from '../hooks/useOnlineStatus';
+import NotFoundPage from './NotFoundPage';
+import { POSTER_PLACEHOLDER_DATA_URL } from '../utils/constants';
+import {
+  getFriendlyRequestError,
+  isNotFoundError,
+  logRequestError,
+  OFFLINE_MESSAGE,
+} from '../utils/errors';
 import { formatRuntime } from '../utils/formatters';
 
 const imageBaseUrl = process.env.REACT_APP_TMDB_IMAGE_URL || 'https://image.tmdb.org/t/p/w500';
@@ -51,20 +60,50 @@ export default function MovieDetailsPage() {
   const [movie, setMovie] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notFound, setNotFound] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     let active = true;
+    const validMovieId = /^\d+$/.test(movieId) && Number(movieId) > 0;
+
+    if (!validMovieId) {
+      setMovie(null);
+      setError('');
+      setNotFound(true);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+
+    if (!isOnline) {
+      setMovie(null);
+      setNotFound(false);
+      setError(OFFLINE_MESSAGE);
+      setIsLoading(false);
+      return () => { active = false; };
+    }
+
     setIsLoading(true);
     setError('');
+    setNotFound(false);
     setMovie(null);
 
     getMovieDetails(movieId)
       .then(({ data }) => active && setMovie(data))
-      .catch((requestError) => active && setError(requestError.message))
+      .catch((requestError) => {
+        if (!active) return;
+        logRequestError(`Unable to load movie ${movieId}`, requestError);
+        if (isNotFoundError(requestError)) {
+          setNotFound(true);
+        } else {
+          setError(getFriendlyRequestError(requestError, 'Movie details could not be loaded. Please try again.'));
+        }
+      })
       .finally(() => active && setIsLoading(false));
 
     return () => { active = false; };
-  }, [movieId]);
+  }, [isOnline, movieId, retryKey]);
 
   const trailer = useMemo(() => {
     const youtubeTrailers = movie?.videos?.results?.filter(
@@ -75,8 +114,9 @@ export default function MovieDetailsPage() {
   }, [movie]);
 
   if (isLoading) return <DetailsSkeleton />;
-  if (error) return <ErrorMessage message={error} />;
-  if (!movie) return <ErrorMessage message="Movie details are unavailable." />;
+  if (notFound) return <NotFoundPage />;
+  if (error) return <ErrorMessage message={error} onRetry={() => setRetryKey((current) => current + 1)} />;
+  if (!movie) return <NotFoundPage />;
 
   const title = movie.title || movie.name || 'Untitled movie';
   const rating = Number.isFinite(movie.vote_average) && movie.vote_average > 0
@@ -110,22 +150,26 @@ export default function MovieDetailsPage() {
           p: { xs: 2, sm: 4, md: 6 },
         }}
       >
-        <Grid container spacing={4} alignItems="end">
+        <Grid container spacing={4} sx={{ alignItems: 'end' }}>
           <Grid size={{ xs: 12, sm: 4, md: 3 }}>
             <Box
               component="img"
               src={posterUrl}
               alt={`${title} poster`}
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = POSTER_PLACEHOLDER_DATA_URL;
+              }}
               sx={{ aspectRatio: '2 / 3', borderRadius: 2, boxShadow: 8, display: 'block', objectFit: 'cover', width: '100%' }}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 8, md: 9 }}>
-            <Stack spacing={2} alignItems="flex-start">
+            <Stack spacing={2} sx={{ alignItems: 'flex-start' }}>
               <Typography variant="h2" component="h1">{title}</Typography>
               <Typography>
                 {formatReleaseDate(movie.release_date)} | {formatRuntime(movie.runtime)} | Rating: {rating}
               </Typography>
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
                 {movie.genres?.length
                   ? movie.genres.map((genre) => <Chip key={genre.id} label={genre.name} />)
                   : <Typography variant="body2">Genres unavailable</Typography>}
@@ -156,7 +200,7 @@ export default function MovieDetailsPage() {
           <Grid container spacing={2}>
             {cast.map((person) => (
               <Grid key={person.cast_id ?? person.credit_id} size={{ xs: 6, sm: 4, md: 3, lg: 1.5 }}>
-                <Stack alignItems="center" spacing={1} textAlign="center">
+                <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
                   <Avatar
                     src={getImageUrl(person.profile_path)}
                     alt={person.name || 'Cast member'}
@@ -188,7 +232,7 @@ export default function MovieDetailsPage() {
             />
           </Box>
         ) : (
-          <Typography color="text.secondary">No trailer is available for this movie.</Typography>
+          <Typography color="text.secondary">Trailer is not available.</Typography>
         )}
       </Box>
     </Stack>

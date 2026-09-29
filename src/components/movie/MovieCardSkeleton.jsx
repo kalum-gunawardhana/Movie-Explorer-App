@@ -6,7 +6,7 @@ export default function MovieCardSkeleton() {
       <Skeleton variant="rectangular" animation="wave" sx={{ aspectRatio: '2 / 3', height: 'auto' }} />
       <CardContent>
         <Skeleton variant="text" width="80%" sx={{ fontSize: '1.25rem' }} />
-        <Stack direction="row" justifyContent="space-between">
+        <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
           <Skeleton variant="text" width="25%" />
           <Skeleton variant="text" width="20%" />
         </Stack>

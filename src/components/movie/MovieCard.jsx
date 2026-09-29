@@ -3,6 +3,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { Box, Button, Card, CardActionArea, CardContent, CardMedia, IconButton, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useMovies } from '../../context/MovieContext';
+import { POSTER_PLACEHOLDER_DATA_URL } from '../../utils/constants';
 
 export default function MovieCard({ movie = {}, showRemoveButton = false }) {
   const navigate = useNavigate();
@@ -33,12 +34,15 @@ export default function MovieCard({ movie = {}, showRemoveButton = false }) {
             component="img"
             image={posterUrl}
             alt={`${title} poster`}
-            onError={(event) => { event.currentTarget.style.display = 'none'; }}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = POSTER_PLACEHOLDER_DATA_URL;
+            }}
             sx={{ height: '100%', inset: 0, objectFit: 'cover', position: 'absolute', width: '100%' }}
           />
         </Box>
         <CardContent sx={{ p: { xs: 1.25, sm: 2 } }}>
-          <Stack direction="row" justifyContent="space-between" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap title={title}>{title}</Typography>
             <Typography color="text.secondary" variant="body2" sx={{ whiteSpace: 'nowrap' }}>★ {rating}</Typography>
           </Stack>
