@@ -5,7 +5,7 @@ export default function useInfiniteScroll(onLoadMore, enabled = true) {
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel || !enabled) return undefined;
+    if (!sentinel || !enabled || typeof IntersectionObserver === 'undefined') return undefined;
 
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) onLoadMore();
