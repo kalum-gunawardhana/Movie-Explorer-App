@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import { discoverMovies, getGenres, getTrendingMovies, searchMovies } from '../api/movieApi';
 import AppLoader from '../components/common/AppLoader';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -8,7 +8,9 @@ import MovieGrid from '../components/movie/MovieGrid';
 import SearchBar from '../components/search/SearchBar';
 import useDebounce from '../hooks/useDebounce';
 import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 import { STORAGE_KEYS } from '../utils/constants';
+import { getFriendlyRequestError, logRequestError, OFFLINE_MESSAGE } from '../utils/errors';
 
 const readLastSearch = () => {
   try {
@@ -59,33 +61,47 @@ export default function HomePage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState('');
+  const [retryKey, setRetryKey] = useState(0);
+  const isOnline = useOnlineStatus();
   const debouncedQuery = useDebounce(query, 450);
   const hasActiveFilters = Boolean(filters.genre || filters.year || filters.minimumRating);
 
   useEffect(() => {
+    if (!isOnline) return undefined;
     let active = true;
     getGenres()
       .then(({ data }) => {
         if (active) setGenres(Array.isArray(data.genres) ? data.genres : []);
       })
-      .catch(() => {
+      .catch((requestError) => {
+        logRequestError('Unable to load genres', requestError);
         if (active) setGenres([]);
       });
 
     return () => { active = false; };
-  }, []);
+  }, [isOnline]);
 
   useEffect(() => {
     setActiveQuery(debouncedQuery.trim());
     setMovies([]);
     setPage(1);
     setTotalPages(1);
+    setHasLoaded(false);
     setError('');
   }, [debouncedQuery]);
 
   useEffect(() => {
     let active = true;
+
+    if (!isOnline) {
+      setIsLoading(false);
+      setHasLoaded(true);
+      setError(OFFLINE_MESSAGE);
+      return () => { active = false; };
+    }
+
     setIsLoading(true);
     setError('');
 
@@ -112,19 +128,24 @@ export default function HomePage() {
       })
       .catch((requestError) => {
         if (!active) return;
-        setError(requestError.message);
-        setTotalPages(page);
+        logRequestError('Unable to load movies', requestError);
+        setError(getFriendlyRequestError(requestError, 'Movies could not be loaded. Please try again.'));
       })
-      .finally(() => active && setIsLoading(false));
+      .finally(() => {
+        if (!active) return;
+        setIsLoading(false);
+        setHasLoaded(true);
+      });
 
     return () => { active = false; };
-  }, [activeQuery, filters, hasActiveFilters, page]);
+  }, [activeQuery, filters, hasActiveFilters, isOnline, page, retryKey]);
 
   const handleFilterChange = (name, value) => {
     setFilters((current) => ({ ...current, [name]: value }));
     setMovies([]);
     setPage(1);
     setTotalPages(1);
+    setHasLoaded(false);
     setError('');
   };
 
@@ -133,7 +154,14 @@ export default function HomePage() {
     setMovies([]);
     setPage(1);
     setTotalPages(1);
+    setHasLoaded(false);
     setError('');
+  };
+
+  const retryRequest = () => {
+    setError('');
+    if (page === 1) setHasLoaded(false);
+    setRetryKey((current) => current + 1);
   };
 
   const loadMore = useCallback(() => {
@@ -158,9 +186,21 @@ export default function HomePage() {
         isTextSearch={Boolean(activeQuery)}
       />
       <Typography variant="h4" component="h1">{sectionTitle}</Typography>
-      {error && <ErrorMessage message={error} />}
-      {isLoading && page === 1 ? <AppLoader /> : <MovieGrid movies={movies} />}
-      {isLoading && page > 1 && <AppLoader count={5} />}
+      {error && <ErrorMessage message={error} onRetry={retryRequest} />}
+      {!hasLoaded || (isLoading && page === 1) ? (
+        <AppLoader />
+      ) : (!error || movies.length > 0) && (
+        <MovieGrid
+          movies={movies}
+          emptyTitle={activeQuery ? 'No movies found for this search.' : 'No movies match these filters.'}
+          emptyMessage={activeQuery ? 'Try another title or clear the filters.' : 'Try clearing or changing the filters.'}
+        />
+      )}
+      {isLoading && page > 1 && (
+        <Box role="status" aria-label="Loading more movies" sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          <CircularProgress size={28} />
+        </Box>
+      )}
       <Box ref={sentinelRef} aria-hidden="true" sx={{ height: 1, overflow: 'hidden', width: '100%' }} />
       {canLoadMore && (
         <Button
