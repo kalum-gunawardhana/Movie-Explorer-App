@@ -42,7 +42,7 @@ export default function MovieCard({ movie = {}, showRemoveButton = false }) {
           />
         </Box>
         <CardContent sx={{ p: { xs: 1.25, sm: 2 } }}>
-          <Stack direction="row" justifyContent="space-between" spacing={1}>
+          <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between' }}>
             <Typography variant="h6" noWrap title={title}>{title}</Typography>
             <Typography color="text.secondary" variant="body2" sx={{ whiteSpace: 'nowrap' }}>★ {rating}</Typography>
           </Stack>

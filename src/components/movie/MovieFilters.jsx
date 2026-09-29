@@ -8,7 +8,7 @@ export default function MovieFilters({ filters, genres, onChange, onClear, isTex
 
   return (
     <Stack spacing={1.5}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { sm: 'center' } }}>
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel id="genre-filter-label">Genre</InputLabel>
           <Select
