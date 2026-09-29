@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo } from 'react';
 import { CssBaseline, ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material';
 import useLocalStorage from '../hooks/useLocalStorage';
+import { STORAGE_KEYS } from '../utils/constants';
 
 const ThemeContext = createContext(null);
 
@@ -18,7 +19,7 @@ const palettes = {
 };
 
 export function ThemeProvider({ children }) {
-  const [mode, setMode] = useLocalStorage('movie-explorer-theme', 'dark');
+  const [mode, setMode] = useLocalStorage(STORAGE_KEYS.theme, 'dark');
   const theme = useMemo(() => createTheme({ palette: palettes[mode] || palettes.dark }), [mode]);
   const value = useMemo(() => ({ mode, toggleTheme: () => setMode((current) => current === 'dark' ? 'light' : 'dark') }), [mode, setMode]);
 
