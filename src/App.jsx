@@ -21,7 +21,7 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 <Route element={<PageContainer />}>
                   <Route index element={<HomePage />} />
-                  <Route path="movies/:movieId" element={<MovieDetailsPage />} />
+                  <Route path="movie/:movieId" element={<MovieDetailsPage />} />
                   <Route path="favorites" element={<FavoritesPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>

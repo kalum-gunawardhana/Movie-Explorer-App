@@ -22,7 +22,7 @@ export default function MovieCard({ movie = {} }) {
 
   return (
     <Card sx={{ height: '100%', position: 'relative' }}>
-      <CardActionArea disabled={!hasId} onClick={() => navigate(`/movies/${movie.id}`)} sx={{ height: '100%' }}>
+      <CardActionArea disabled={!hasId} onClick={() => navigate(`/movie/${movie.id}`)} sx={{ height: '100%' }}>
         <Box sx={{ alignItems: 'center', aspectRatio: '2 / 3', bgcolor: 'action.hover', display: 'flex', justifyContent: 'center', position: 'relative' }}>
           <Typography color="text.secondary" variant="body2">No poster available</Typography>
           <CardMedia
