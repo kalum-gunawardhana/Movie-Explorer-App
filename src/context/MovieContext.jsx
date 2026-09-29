@@ -1,22 +1,66 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { STORAGE_KEYS } from '../utils/constants';
 
 const MovieContext = createContext(null);
 
+const toFavoriteMovie = (movie) => ({
+  id: movie.id,
+  title: movie.title || movie.name || 'Untitled movie',
+  poster_path: movie.poster_path || null,
+  release_date: movie.release_date || '',
+  vote_average: Number.isFinite(movie.vote_average) ? movie.vote_average : null,
+});
+
+const normalizeFavorites = (movies) => {
+  const uniqueMovies = new Map();
+  if (!Array.isArray(movies)) return [];
+
+  movies.forEach((movie) => {
+    if (movie?.id !== undefined && movie?.id !== null) {
+      uniqueMovies.set(movie.id, toFavoriteMovie(movie));
+    }
+  });
+
+  return [...uniqueMovies.values()];
+};
+
 export function MovieProvider({ children }) {
-  const [favorites, setFavorites] = useLocalStorage(STORAGE_KEYS.favorites, []);
+  const [storedFavorites, setFavorites] = useLocalStorage(STORAGE_KEYS.favorites, []);
+  const favorites = useMemo(
+    () => Array.isArray(storedFavorites) ? storedFavorites : [],
+    [storedFavorites],
+  );
+
+  useEffect(() => {
+    const normalizedFavorites = normalizeFavorites(storedFavorites);
+    if (JSON.stringify(storedFavorites) !== JSON.stringify(normalizedFavorites)) {
+      setFavorites(normalizedFavorites);
+    }
+  }, [setFavorites, storedFavorites]);
 
   const isFavorite = useCallback((movieId) => favorites.some((movie) => movie.id === movieId), [favorites]);
-  const toggleFavorite = useCallback((movie) => {
+  const addFavorite = useCallback((movie) => {
+    if (movie?.id === undefined || movie?.id === null) return;
+
+    setFavorites((current) => {
+      const currentFavorites = Array.isArray(current) ? current : [];
+      if (currentFavorites.some((item) => item.id === movie.id)) return currentFavorites;
+      return [...currentFavorites, toFavoriteMovie(movie)];
+    });
+  }, [setFavorites]);
+  const removeFavorite = useCallback((movieId) => {
     setFavorites((current) => (
-      current.some((item) => item.id === movie.id)
-        ? current.filter((item) => item.id !== movie.id)
-        : [...current, movie]
+      Array.isArray(current) ? current.filter((movie) => movie.id !== movieId) : []
     ));
   }, [setFavorites]);
 
-  const value = useMemo(() => ({ favorites, isFavorite, toggleFavorite }), [favorites, isFavorite, toggleFavorite]);
+  const value = useMemo(() => ({
+    favorites,
+    addFavorite,
+    removeFavorite,
+    isFavorite,
+  }), [addFavorite, favorites, isFavorite, removeFavorite]);
   return <MovieContext.Provider value={value}>{children}</MovieContext.Provider>;
 }
 

@@ -47,7 +47,7 @@ function DetailsSkeleton() {
 
 export default function MovieDetailsPage() {
   const { movieId } = useParams();
-  const { isFavorite, toggleFavorite } = useMovies();
+  const { addFavorite, isFavorite, removeFavorite } = useMovies();
   const [movie, setMovie] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -92,7 +92,6 @@ export default function MovieDetailsPage() {
     poster_path: movie.poster_path,
     release_date: movie.release_date,
     vote_average: movie.vote_average,
-    popularity: movie.popularity,
   };
 
   return (
@@ -135,7 +134,7 @@ export default function MovieDetailsPage() {
                 color="error"
                 variant="contained"
                 startIcon={favorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-                onClick={() => toggleFavorite(favoriteMovie)}
+                onClick={() => favorite ? removeFavorite(movie.id) : addFavorite(favoriteMovie)}
               >
                 {favorite ? 'Remove from favorites' : 'Add to favorites'}
               </Button>
