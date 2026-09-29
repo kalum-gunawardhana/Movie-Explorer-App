@@ -4,13 +4,13 @@ import MovieCard from './MovieCard';
 
 export default function MovieGrid({ movies }) {
   if (!movies.length) {
-    return <EmptyState title="No movies found" message="Try another search or change your filters." />;
+    return <EmptyState title="No movies found" message="Try a different movie title." />;
   }
 
   return (
-    <Grid container spacing={3}>
+    <Grid container spacing={2}>
       {movies.map((movie) => (
-        <Grid key={movie.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+        <Grid key={movie.id} size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}>
           <MovieCard movie={movie} />
         </Grid>
       ))}

@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
 import { getTrendingMovies, searchMovies } from '../api/movieApi';
 import AppLoader from '../components/common/AppLoader';
 import ErrorMessage from '../components/common/ErrorMessage';
-import MovieFilters from '../components/movie/MovieFilters';
 import MovieGrid from '../components/movie/MovieGrid';
 import SearchBar from '../components/search/SearchBar';
 import useDebounce from '../hooks/useDebounce';
@@ -12,7 +11,6 @@ import useInfiniteScroll from '../hooks/useInfiniteScroll';
 export default function HomePage() {
   const [movies, setMovies] = useState([]);
   const [query, setQuery] = useState('');
-  const [sortBy, setSortBy] = useState('popularity');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -48,22 +46,17 @@ export default function HomePage() {
 
   const loadMore = useCallback(() => setPage((current) => current + 1), []);
   const sentinelRef = useInfiniteScroll(loadMore, hasMore && !loading && !error);
-  const sortedMovies = useMemo(() => [...movies].sort((a, b) => {
-    if (sortBy === 'rating') return b.vote_average - a.vote_average;
-    if (sortBy === 'newest') return (b.release_date || '').localeCompare(a.release_date || '');
-    return b.popularity - a.popularity;
-  }), [movies, sortBy]);
+  const sectionTitle = debouncedQuery.trim()
+    ? `Search results for “${debouncedQuery.trim()}”`
+    : 'Trending this week';
 
   return (
     <Stack spacing={3}>
-      <Typography variant="h3" component="h1">Discover movies</Typography>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <SearchBar value={query} onChange={setQuery} />
-        <MovieFilters sortBy={sortBy} onSortChange={setSortBy} />
-      </Stack>
+      <SearchBar value={query} onChange={setQuery} />
+      <Typography variant="h4" component="h1">{sectionTitle}</Typography>
       {error && <ErrorMessage message={error} />}
-      {loading && page === 1 ? <AppLoader /> : <MovieGrid movies={sortedMovies} />}
-      {loading && page > 1 && <AppLoader />}
+      {loading && page === 1 ? <AppLoader /> : <MovieGrid movies={movies} />}
+      {loading && page > 1 && <AppLoader count={5} />}
       <Box ref={sentinelRef} aria-hidden="true" sx={{ height: 1 }} />
     </Stack>
   );
