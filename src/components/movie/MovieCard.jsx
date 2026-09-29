@@ -1,12 +1,12 @@
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
-import { Box, Card, CardActionArea, CardContent, CardMedia, IconButton, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardActionArea, CardContent, CardMedia, IconButton, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useMovies } from '../../context/MovieContext';
 
-export default function MovieCard({ movie = {} }) {
+export default function MovieCard({ movie = {}, showRemoveButton = false }) {
   const navigate = useNavigate();
-  const { isFavorite, toggleFavorite } = useMovies();
+  const { addFavorite, isFavorite, removeFavorite } = useMovies();
   const hasId = movie.id !== undefined && movie.id !== null;
   const favorite = hasId && isFavorite(movie.id);
   const title = movie.title || movie.name || 'Untitled movie';
@@ -19,10 +19,14 @@ export default function MovieCard({ movie = {} }) {
   const posterUrl = movie.poster_path
     ? `${process.env.REACT_APP_TMDB_IMAGE_URL}${movie.poster_path}`
     : '/images/poster-placeholder.png';
+  const handleFavorite = () => {
+    if (favorite) removeFavorite(movie.id);
+    else addFavorite(movie);
+  };
 
   return (
-    <Card sx={{ height: '100%', position: 'relative' }}>
-      <CardActionArea disabled={!hasId} onClick={() => navigate(`/movie/${movie.id}`)} sx={{ height: '100%' }}>
+    <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+      <CardActionArea disabled={!hasId} onClick={() => navigate(`/movie/${movie.id}`)} sx={{ flexGrow: 1 }}>
         <Box sx={{ alignItems: 'center', aspectRatio: '2 / 3', bgcolor: 'action.hover', display: 'flex', justifyContent: 'center', position: 'relative' }}>
           <Typography color="text.secondary" variant="body2">No poster available</Typography>
           <CardMedia
@@ -41,16 +45,28 @@ export default function MovieCard({ movie = {} }) {
           <Typography variant="body2" color="text.secondary">{releaseYear}</Typography>
         </CardContent>
       </CardActionArea>
-      <IconButton
-        aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
-        color="error"
-        disabled={!hasId}
-        onClick={() => toggleFavorite(movie)}
-        size="small"
-        sx={{ bgcolor: 'background.paper', position: 'absolute', right: 8, top: 8, '&:hover': { bgcolor: 'background.paper' } }}
-      >
-        {favorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
-      </IconButton>
+      {showRemoveButton ? (
+        <Button
+          color="error"
+          startIcon={<FavoriteIcon />}
+          onClick={() => removeFavorite(movie.id)}
+          disabled={!hasId}
+          sx={{ m: 1 }}
+        >
+          Remove
+        </Button>
+      ) : (
+        <IconButton
+          aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+          color="error"
+          disabled={!hasId}
+          onClick={handleFavorite}
+          size="small"
+          sx={{ bgcolor: 'background.paper', position: 'absolute', right: 8, top: 8, '&:hover': { bgcolor: 'background.paper' } }}
+        >
+          {favorite ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+        </IconButton>
+      )}
     </Card>
   );
 }

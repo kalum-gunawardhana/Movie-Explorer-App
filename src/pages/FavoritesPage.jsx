@@ -7,7 +7,12 @@ export default function FavoritesPage() {
   return (
     <Stack spacing={3}>
       <Typography variant="h3" component="h1">Your favorites</Typography>
-      <MovieGrid movies={favorites} />
+      <MovieGrid
+        movies={favorites}
+        showRemoveButton
+        emptyTitle="No favorites yet"
+        emptyMessage="Movies you add to favorites will appear here."
+      />
     </Stack>
   );
 }
