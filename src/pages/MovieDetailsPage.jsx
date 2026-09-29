@@ -18,7 +18,7 @@ export default function MovieDetailsPage() {
   useEffect(() => {
     setLoading(true);
     getMovieDetails(movieId)
-      .then(setMovie)
+      .then(({ data }) => setMovie(data))
       .catch((requestError) => setError(requestError.message))
       .finally(() => setLoading(false));
   }, [movieId]);

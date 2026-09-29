@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { getPopularMovies, searchMovies } from '../api/movieApi';
+import { getTrendingMovies, searchMovies } from '../api/movieApi';
 import AppLoader from '../components/common/AppLoader';
 import ErrorMessage from '../components/common/ErrorMessage';
 import MovieFilters from '../components/movie/MovieFilters';
@@ -32,10 +32,10 @@ export default function HomePage() {
 
     const request = debouncedQuery.trim()
       ? searchMovies(debouncedQuery.trim(), page)
-      : getPopularMovies(page);
+      : getTrendingMovies(page);
 
     request
-      .then((data) => {
+      .then(({ data }) => {
         if (!active) return;
         setMovies((current) => page === 1 ? data.results : [...current, ...data.results]);
         setHasMore(page < data.total_pages);
