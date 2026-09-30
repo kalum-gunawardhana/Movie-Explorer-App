@@ -70,6 +70,21 @@ describe('authentication', () => {
     expect(window.localStorage.getItem('movieExplorerAuth')).toBeNull();
   });
 
+  test('accepts credentials configured through environment variables', async () => {
+    renderApp();
+
+    fireEvent.change(screen.getByLabelText('Username'), {
+      target: { value: process.env.REACT_APP_LOGIN_USERNAME },
+    });
+    fireEvent.change(screen.getByLabelText('Password'), {
+      target: { value: process.env.REACT_APP_LOGIN_PASSWORD },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+
+    expect(await screen.findByText('Trending Movie')).toBeInTheDocument();
+    expect(window.localStorage.getItem('movieExplorerAuth')).toBe('true');
+  });
+
   test('restores a session and logout clears it', async () => {
     window.localStorage.setItem('movieExplorerAuth', 'true');
     const firstRender = renderApp();
