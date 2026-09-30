@@ -3,11 +3,8 @@ import { STORAGE_KEYS } from '../utils/constants';
 
 const AuthContext = createContext(null);
 
-// Demo-only credentials. Replace this client-side check when a real auth API is available.
-export const DEMO_CREDENTIALS = Object.freeze({
-  username: 'demo',
-  password: 'demo123',
-});
+const loginUsername = process.env.REACT_APP_LOGIN_USERNAME?.trim();
+const loginPassword = process.env.REACT_APP_LOGIN_PASSWORD;
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -17,8 +14,9 @@ export function AuthProvider({ children }) {
   });
 
   const login = useCallback((username, password) => {
-    const isValid = username === DEMO_CREDENTIALS.username
-      && password === DEMO_CREDENTIALS.password;
+    const isValid = Boolean(loginUsername && loginPassword)
+      && username === loginUsername
+      && password === loginPassword;
 
     if (isValid) {
       // Persist only the authentication flag. Credentials are never stored.

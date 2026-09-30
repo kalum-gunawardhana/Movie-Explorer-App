@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Box, Button, Paper, TextField, Typography } from '@mui/material';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { DEMO_CREDENTIALS, useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -32,10 +32,7 @@ export default function LoginPage() {
     <Box sx={{ display: 'grid', minHeight: '100vh', p: 2, placeItems: 'center' }}>
       <Paper component="form" onSubmit={handleSubmit} sx={{ maxWidth: 420, p: 4, width: '100%' }}>
         <Typography variant="h4" gutterBottom>Movie Explorer</Typography>
-        <Typography color="text.secondary" sx={{ mb: 2 }}>Sign in to discover and save movies.</Typography>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Demo login: <strong>{DEMO_CREDENTIALS.username}</strong> / <strong>{DEMO_CREDENTIALS.password}</strong>
-        </Alert>
+        <Typography color="text.secondary" sx={{ mb: 3 }}>Sign in to discover and save movies.</Typography>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <TextField
           autoComplete="username"
